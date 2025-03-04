@@ -135,7 +135,7 @@ const Acceuil = () => {
         <div  style={{ margin:"auto" , width: "95%",  borderRadius: "8px", padding: "1rem", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
             <img
             style={{ textAlign: "center",height:"300px" , width: "100%" }}
-            src={image12} alt="" srcset="" />
+            src={image12} alt="" srcSet="" />
         </div>
         
     </div>

@@ -1,20 +1,30 @@
 import React from "react";
-import { Form, Input, Button, Select, Card } from "antd";
+import { Form, Input, Button, Select, Card, message } from "antd";
 import { Link } from "react-router-dom";
+import axios from "axios"; // Ajouter axios
 
 const { Option } = Select;
 
 const Signup = () => {
-  const onFinish = (values) => {
-    console.log("Success:", values);
+  const onFinish = async (values) => {
+    try {
+      // Suppression de l'espace en trop dans l'URL
+      const response = await axios.post('http://localhost:5000/api/users/signup', values);
+      console.log("Réponse de l'inscription :", response.data);
+      console.log(values);
+      message.success('Inscription réussie !');
+      // Rediriger vers la page de connexion ou autre
+    } catch (error) {
+      console.error("Erreur d'inscription :", error);
+      message.error('Erreur lors de l\'inscription');
+    }
   };
 
   return (
-    
     <div className="flex items-center justify-center h-screen bg-gray-100">
-        <Button type="default" style={{ marginTop: 10 ,marginLeft:20}} onClick={() => window.history.back()}>
-            <b>Retour</b>
-        </Button>
+      <Button type="default" style={{ marginTop: 10, marginLeft: 20 }} onClick={() => window.history.back()}>
+        <b>Retour</b>
+      </Button>
       <Card className="w-96 shadow-lg" style={{ width: 400, margin: "auto" }}>
         <h2 className="text-center text-2xl font-semibold mb-4" style={{ textAlign: 'center' }}>Inscription</h2>
         <Form
@@ -73,7 +83,6 @@ const Signup = () => {
         </Form>
         <div className="text-center mt-4">
           <p>Déjà un compte ? <Link to="/login">Se connecter</Link></p>
-          
         </div>
       </Card>
     </div>
