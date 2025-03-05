@@ -1,0 +1,268 @@
+paths:
+  # Routes d'authentification
+  /auth/signup:
+    post:
+      summary: Inscription d'un utilisateur
+      description: Crée un nouvel utilisateur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - role
+              properties:
+                username:
+                  type: string
+                  description: Nom de l'utilisateur
+                email:
+                  type: string
+                  format: email
+                  description: Email de l'utilisateur
+                password:
+                  type: string
+                  description: Mot de passe
+                role:
+                  type: string
+                  enum:
+                    - client
+                    - restaurateur
+                  description: Rôle de l'utilisateur
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+        '400':
+          description: Requête incorrecte
+        '500':
+          description: Erreur serveur
+
+  /auth/login:
+    post:
+      summary: Connexion d'un utilisateur
+      description: Permet à un utilisateur de se connecter.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email de l'utilisateur
+                password:
+                  type: string
+                  description: Mot de passe
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Token JWT de l'utilisateur
+        '400':
+          description: Email ou mot de passe incorrect
+        '500':
+          description: Erreur serveur
+
+  /users/{userId}:
+    get:
+      summary: Récupérer un utilisateur
+      description: Permet de récupérer les informations d'un utilisateur par son ID.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de l'utilisateur
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Utilisateur récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID de l'utilisateur
+                  username:
+                    type: string
+                    description: Nom de l'utilisateur
+                  email:
+                    type: string
+                    description: Email de l'utilisateur
+                  role:
+                    type: string
+                    description: Rôle de l'utilisateur
+        '404':
+          description: Utilisateur non trouvé
+        '500':
+          description: Erreur serveur
+
+  # Routes des restaurants
+  /restaurants:
+    get:
+      summary: Liste des restaurants
+      description: Récupère la liste de tous les restaurants.
+      responses:
+        '200':
+          description: Liste des restaurants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: ID du restaurant
+                    name:
+                      type: string
+                      description: Nom du restaurant
+                    location:
+                      type: string
+                      description: Emplacement du restaurant
+                    cuisine:
+                      type: string
+                      description: Type de cuisine du restaurant
+        '500':
+          description: Erreur serveur
+
+  /restaurants/{restaurantId}:
+    get:
+      summary: Récupérer un restaurant
+      description: Récupère les détails d'un restaurant par son ID.
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          description: ID du restaurant
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Restaurant trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID du restaurant
+                  name:
+                    type: string
+                    description: Nom du restaurant
+                  location:
+                    type: string
+                    description: Emplacement du restaurant
+                  cuisine:
+                    type: string
+                    description: Type de cuisine du restaurant
+        '404':
+          description: Restaurant non trouvé
+        '500':
+          description: Erreur serveur
+
+  /restaurants:
+    post:
+      summary: Ajouter un nouveau restaurant
+      description: Permet d'ajouter un nouveau restaurant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - location
+                - cuisine
+              properties:
+                name:
+                  type: string
+                  description: Nom du restaurant
+                location:
+                  type: string
+                  description: Emplacement du restaurant
+                cuisine:
+                  type: string
+                  description: Type de cuisine du restaurant
+      responses:
+        '201':
+          description: Restaurant créé avec succès
+        '400':
+          description: Requête incorrecte
+        '500':
+          description: Erreur serveur
+
+  /restaurants/{restaurantId}:
+    put:
+      summary: Modifier un restaurant
+      description: Permet de modifier les informations d'un restaurant.
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          description: ID du restaurant
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nom du restaurant
+                location:
+                  type: string
+                  description: Emplacement du restaurant
+                cuisine:
+                  type: string
+                  description: Type de cuisine du restaurant
+      responses:
+        '200':
+          description: Restaurant modifié avec succès
+        '400':
+          description: Requête incorrecte
+        '404':
+          description: Restaurant non trouvé
+        '500':
+          description: Erreur serveur
+
+  /restaurants/{restaurantId}:
+    delete:
+      summary: Supprimer un restaurant
+      description: Permet de supprimer un restaurant par son ID.
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          description: ID du restaurant
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Restaurant supprimé avec succès
+        '404':
+          description: Restaurant non trouvé
+        '500':
+          description: Erreur serveur

@@ -1,32 +1,33 @@
-import React, { useState } from "react";
-import { Table, Button, Modal, Form, Input, InputNumber, Upload, Space, message, Image, Row, Col, List } from "antd";
-import { EditOutlined, DeleteOutlined, UploadOutlined, PlusOutlined } from "@ant-design/icons";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Table, Button, Modal, Form, Input, InputNumber, Upload, Space, message, Image, Row, Col } from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
 
 const Restaurant = () => {
-  const [restaurant, setRestaurant] = useState(null); // Stocke un seul restaurant
+  const [restaurants, setRestaurants] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [vitrineFileList, setVitrineFileList] = useState([]);
   const [supplementaireFileList, setSupplementaireFileList] = useState([]);
-  
-  // Simuler des commentaires des clients
-  const [comments, setComments] = useState([
-    "Le service était excellent, je recommande vivement!",
-    "La nourriture était bonne, mais l'attente était longue.",
-    "Ambiance agréable, mais les prix sont un peu élevés."
-  ]);
 
-  // Ouvrir la modal (ajout ou modification)
+  // Récupérer tous les restaurants
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/restaurants"); // URL de votre API
+        setRestaurants(response.data);
+      } catch (error) {
+        message.error("Erreur lors de la récupération des restaurants");
+      }
+    };
+    fetchRestaurants();
+  }, []);
+
+  // Ouvrir la modal pour ajouter ou modifier un restaurant
   const showModal = () => {
-    if (restaurant) {
-      form.setFieldsValue(restaurant);
-      setVitrineFileList(restaurant.imageVitrine || []);
-      setSupplementaireFileList(restaurant.imagesSupplementaires || []);
-    } else {
-      form.resetFields();
-      setVitrineFileList([]);
-      setSupplementaireFileList([]);
-    }
+    form.resetFields();
+    setVitrineFileList([]);
+    setSupplementaireFileList([]);
     setIsModalVisible(true);
   };
 
@@ -34,182 +35,122 @@ const Restaurant = () => {
     setIsModalVisible(false);
   };
 
-  // Ajouter ou modifier le restaurant
-  const onFinish = (values) => {
-    const newRestaurant = { 
-      ...values, 
-      imageVitrine: vitrineFileList, 
-      imagesSupplementaires: supplementaireFileList 
+  // Ajouter ou modifier un restaurant
+  const onFinish = async (values) => {
+    const newRestaurant = {
+      ...values,
+      image1: vitrineFileList[0]?.url,
+      image2: vitrineFileList[1]?.url,
+      image3: vitrineFileList[2]?.url,
+      image4: vitrineFileList[3]?.url
     };
-    setRestaurant(newRestaurant);
-    message.success(restaurant ? "Restaurant mis à jour !" : "Restaurant ajouté !");
-    setIsModalVisible(false);
+
+    try {
+      if (newRestaurant.id) {
+        // Modifier un restaurant existant
+        await axios.put(`http://localhost:5000/api/restaurants/${newRestaurant.id}`, newRestaurant);
+        message.success("Restaurant modifié !");
+      } else {
+        // Ajouter un nouveau restaurant
+        await axios.post("http://localhost:5000/api/restaurants", newRestaurant);
+        message.success("Restaurant ajouté !");
+      }
+      setIsModalVisible(false);
+      setRestaurants([...restaurants, newRestaurant]); // Ajouter à la liste des restaurants
+    } catch (error) {
+      message.error("Erreur lors de la sauvegarde du restaurant");
+    }
   };
 
-  // Suppression du restaurant
-  const handleDelete = () => {
-    setRestaurant(null);
-    message.success("Restaurant supprimé !");
+  // Supprimer un restaurant
+  const handleDelete = async (restaurantId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/restaurants/${restaurantId}`);
+      setRestaurants(restaurants.filter((restaurant) => restaurant.id !== restaurantId));
+      message.success("Restaurant supprimé !");
+    } catch (error) {
+      message.error("Erreur lors de la suppression du restaurant");
+    }
   };
-
-  // Gestion des fichiers uploadés
-  const handleVitrineChange = ({ fileList }) => setVitrineFileList(fileList);
-  const handleSupplementaireChange = ({ fileList }) => setSupplementaireFileList(fileList);
 
   // Colonnes du tableau
   const columns = [
-    { title: "Nom", dataIndex: "nom", key: "nom" },
-    { title: "Adresse", dataIndex: "adresse", key: "adresse" },
-    { title: "Contact", dataIndex: "contact", key: "contact" },
-    { title: "Places", dataIndex: "places", key: "places" },
-    { title: "Horaires", dataIndex: "horaires", key: "horaires" },
-    { title: "Menu", dataIndex: "menu", key: "menu" },
-    { title: "Montant (€)", dataIndex: "montantReservation", key: "montantReservation" },
+    { title: "Nom", dataIndex: "name", key: "name" },
+    { title: "Adresse", dataIndex: "address", key: "address" },
+    { title: "Nombre de places", dataIndex: "seats", key: "seats" },
+    { title: "Horaires", dataIndex: "hours", key: "hours" },
     {
-      title: "Image Vitrine",
-      dataIndex: "imageVitrine",
-      key: "imageVitrine",
-      render: (images) => images?.length > 0 ? <Image width={80} src={images[0].thumbUrl} /> : "Aucune"
-    },
-    {
-      title: "Images Supplémentaires",
-      dataIndex: "imagesSupplementaires",
-      key: "imagesSupplementaires",
-      render: (images) => images?.length > 0 
-        ? images.map((img, index) => <Image key={index} width={50} src={img.thumbUrl} style={{ marginRight: 8 }} />) 
-        : "Aucune"
+      title: "Images",
+      key: "images",
+      render: (text, record) => (
+        <div>
+          {record.image1 && <Image width={80} src={record.image1} />}
+          {record.image2 && <Image width={80} src={record.image2} />}
+          {record.image3 && <Image width={80} src={record.image3} />}
+          {record.image4 && <Image width={80} src={record.image4} />}
+        </div>
+      )
     },
     {
       title: "Actions",
       key: "actions",
-      render: () => (
+      render: (text, record) => (
         <Space>
-          <Button icon={<EditOutlined />} onClick={showModal}>Modifier</Button>
-          <Button icon={<DeleteOutlined />} danger onClick={handleDelete}>Supprimer</Button>
+          <Button icon={<EditOutlined />} onClick={() => showModal(record)}>Modifier</Button>
+          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.id)}>Supprimer</Button>
         </Space>
       )
     }
   ];
 
   return (
-    <div style={{ padding: "24px", background: "#fff", borderRadius: "8px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
-      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Gestion du Restaurant</h2>
-
-      {/* Bouton Ajouter (désactivé si un restaurant existe) */}
+    <div>
       <Button 
         type="primary" 
         icon={<PlusOutlined />} 
         onClick={showModal} 
-        disabled={!!restaurant} 
-        style={{ marginBottom: "16px" }}
+        style={{ marginBottom: 20 }}
       >
-        Ajouter un Restaurant
+        Ajouter un restaurant
       </Button>
 
-      {/* Tableau */}
-      <Table columns={columns} dataSource={restaurant ? [restaurant] : []} rowKey="nom" pagination={false} />
+      <Table columns={columns} dataSource={restaurants} rowKey="id" />
 
-      {/* Section Commentaires */}
-      {restaurant && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>Commentaires des clients :</h3>
-          <List
-            bordered
-            dataSource={comments}  // Affichage des commentaires existants
-            renderItem={(comment, index) => (
-              <List.Item>
-                <strong>Commentaire {index + 1}:</strong> {comment}
-              </List.Item>
-            )}
-          />
-        </div>
-      )}
-
-      {/* Modal de Formulaire */}
+      {/* Modal pour ajouter/modifier un restaurant */}
       <Modal
-        title={restaurant ? "Modifier le Restaurant" : "Ajouter un Restaurant"}
-        open={isModalVisible}
+        title="Ajouter / Modifier un Restaurant"
+        visible={isModalVisible}
         onCancel={handleCancel}
         footer={null}
-        width={800} // Largeur du formulaire augmentée
       >
         <Form form={form} onFinish={onFinish} layout="vertical">
-          {/* Champs en 3 colonnes pour un formulaire plus rectangulaire */}
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="nom" label="Nom du Restaurant" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="adresse" label="Adresse" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="contact" label="Contact" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="address" label="Adresse" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="seats" label="Nombre de places" rules={[{ required: true }]}>
+            <InputNumber min={1} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item name="hours" label="Horaires" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="image1" label="Image 1">
+            <Upload listType="picture-card" fileList={vitrineFileList} onChange={({ fileList }) => setVitrineFileList(fileList)} maxCount={1}>
+              {vitrineFileList.length < 1 && <UploadOutlined />}
+            </Upload>
+          </Form.Item>
+          <Form.Item name="image2" label="Image 2">
+            <Upload listType="picture-card" fileList={supplementaireFileList} onChange={({ fileList }) => setSupplementaireFileList(fileList)} maxCount={1}>
+              {supplementaireFileList.length < 1 && <UploadOutlined />}
+            </Upload>
+          </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="places" label="Nombre de Places" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <InputNumber min={1} style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="horaires" label="Horaires" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="menu" label="Menu Disponible" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="montantReservation" label="Montant de Réservation (€)" rules={[{ required: true, message: "Champ obligatoire" }]}>
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="imageVitrine" label="Image Vitrine">
-                <Upload 
-                  listType="picture-card" 
-                  fileList={vitrineFileList} 
-                  onChange={handleVitrineChange} 
-                  maxCount={1} 
-                  beforeUpload={() => false}
-                >
-                  {vitrineFileList.length < 1 && <UploadOutlined />}
-                </Upload>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="imagesSupplementaires" label="Images Supplémentaires (Max 4)">
-                <Upload 
-                  listType="picture-card" 
-                  fileList={supplementaireFileList} 
-                  onChange={handleSupplementaireChange} 
-                  maxCount={4} 
-                  beforeUpload={() => false}
-                >
-                  {supplementaireFileList.length < 4 && <UploadOutlined />}
-                </Upload>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item style={{ textAlign: "center" }}>
-            <Button type="primary" htmlType="submit" style={{ marginRight: "10px" }}>
-              {restaurant ? "Modifier" : "Ajouter"}
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Sauvegarder
             </Button>
-            <Button onClick={handleCancel}>Annuler</Button>
           </Form.Item>
         </Form>
       </Modal>

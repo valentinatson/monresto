@@ -14,6 +14,7 @@ const Signup = () => {
       console.log(values);
       message.success('Inscription réussie !');
       // Rediriger vers la page de connexion ou autre
+      window.location.href = '/login';
     } catch (error) {
       console.error("Erreur d'inscription :", error);
       message.error('Erreur lors de l\'inscription');

@@ -15,12 +15,16 @@ const Login = () => {
       
       const { token, role, user } = response.data; // Assurez-vous que l'API renvoie l'objet `user`
 
+      
       // Stocker les informations de l'utilisateur dans localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("user", JSON.stringify(user)); // Stocke l'utilisateur (nom, email...)
 
       message.success("Connexion réussie !");
+
+      console.log(localStorage.getItem("role"));
+
       
       // Redirection en fonction du rôle
       if (role === "restaurateur") {

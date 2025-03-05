@@ -1,18 +1,16 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("../config/db"); // Connexion MySQL
+const db = require("../config/db");
 require("dotenv").config();
-
 
 // Fonction pour l'inscription
 exports.signup = (req, res) => {
-  const { username, telephone, email, password, role } = req.body;
+  const { name, phone, email, password, role } = req.body;
 
-  if (!username || !telephone || !email || !password || !role) {
+  if (!name || !phone || !email || !password || !role) {
     return res.status(400).json({ message: "Tous les champs sont requis." });
   }
 
-  // Vérifier si l'email existe déjà
   db.query("SELECT * FROM users WHERE email = ?", [email], (err, existingUser) => {
     if (err) {
       console.error("Erreur SQL :", err);
@@ -23,17 +21,15 @@ exports.signup = (req, res) => {
       return res.status(400).json({ message: "L'email est déjà utilisé." });
     }
 
-    // Hacher le mot de passe
     bcrypt.hash(password, 10, (err, hashedPassword) => {
       if (err) {
         console.error("Erreur de hachage :", err);
         return res.status(500).json({ message: "Erreur interne du serveur." });
       }
 
-      // Insérer l'utilisateur
       db.query(
         "INSERT INTO users (name, phone, email, password, role) VALUES (?, ?, ?, ?, ?)",
-        [username, telephone, email, hashedPassword, role],
+        [name, phone, email, hashedPassword, role],
         (err, result) => {
           if (err) {
             console.error("Erreur SQL lors de l'insertion :", err);
@@ -42,7 +38,7 @@ exports.signup = (req, res) => {
 
           res.status(201).json({
             message: "Utilisateur créé avec succès",
-            user: { id: result.insertId, username, email, role },
+            user: { id: result.insertId, name, email, role },
           });
         }
       );
@@ -58,7 +54,6 @@ exports.login = (req, res) => {
     return res.status(400).json({ message: "Email et mot de passe sont requis." });
   }
 
-  // Vérifier si l'utilisateur existe
   db.query("SELECT * FROM users WHERE email = ?", [email], (err, users) => {
     if (err) {
       console.error("Erreur SQL :", err);
@@ -71,7 +66,6 @@ exports.login = (req, res) => {
 
     const user = users[0];
 
-    // Comparer le mot de passe
     bcrypt.compare(password, user.password, (err, isMatch) => {
       if (err) {
         console.error("Erreur de comparaison :", err);
@@ -92,6 +86,13 @@ exports.login = (req, res) => {
       res.status(200).json({
         message: "Connexion réussie",
         token,
+        role: user.role, // ➤ Ajout du rôle pour la redirection
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
       });
     });
   });
